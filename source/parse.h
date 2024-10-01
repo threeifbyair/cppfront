@@ -217,7 +217,7 @@ struct literal_node {
             if (
                 !std::exchange(first, false)
                 && p->as_string_view().starts_with("\"")
-                ) 
+                )
             {
                 ret += " ";
             }
@@ -2152,6 +2152,7 @@ struct jump_statement_node
 
 struct using_statement_node
 {
+    bool                                export_ = false;
     token const*                        keyword = {};
     std::unique_ptr<id_expression_node> id;
 
@@ -2426,7 +2427,7 @@ struct parameter_declaration_list_node
 
     std::vector<std::unique_ptr<parameter_declaration_node>> parameters;
 
-    parameter_declaration_list_node(bool f = false, bool t = false, bool s = false) 
+    parameter_declaration_list_node(bool f = false, bool t = false, bool s = false)
         : in_function_typeid{f}
         , in_template_param_list{t}
         , in_statement_param_list{s}
@@ -2542,7 +2543,7 @@ struct function_type_node
         assert (parameters);
 
         auto ret = parameters->to_string();
-        
+
         if (throws) {
             ret += " throws";
         }
@@ -2960,7 +2961,7 @@ struct alias_node
 };
 
 
-enum class accessibility : u8 { default_ = 0, public_, protected_, private_ };
+enum class accessibility : u8 { default_ = 0, public_, protected_, private_, export_ };
 
 auto to_string(accessibility a)
     -> std::string
@@ -2969,6 +2970,7 @@ auto to_string(accessibility a)
     break;case accessibility::public_   : return "public";
     break;case accessibility::protected_: return "protected";
     break;case accessibility::private_  : return "private";
+    break;case accessibility::export_   : return "export";
     break;default: assert(a == accessibility::default_);
     }
     return "default";
@@ -3146,6 +3148,12 @@ struct declaration_node
         -> bool
     {
         return access == accessibility::private_;
+    }
+
+    auto is_export() const
+        -> bool
+    {
+        return access == accessibility::export_;
     }
 
     auto is_default_access() const
@@ -5907,7 +5915,7 @@ public:
     //
     //  errors      error list
     //
-    parser( 
+    parser(
         std::vector<error_entry>& errors_,
         std::set<std::string>&    includes_
     )
@@ -6370,9 +6378,9 @@ private:
                 //  Next should be an expression-list followed by a ')'
                 //  If not, then this wasn't a call expression so backtrack to
                 //  the '(' which will be part of the next grammar production
-		        is_inside_call_expr = true;
+            is_inside_call_expr = true;
                 term.expr_list = expression_list(term.op, lexeme::RightParen);
-		        is_inside_call_expr = false;
+            is_inside_call_expr = false;
 
                 if (
                     term.expr_list
@@ -6401,7 +6409,7 @@ private:
                 }
             }
             else if (
-                ( 
+                (
                     term.op->type() == lexeme::EllipsisLess
                     || term.op->type() == lexeme::EllipsisEqual
                     )
@@ -7321,7 +7329,7 @@ private:
 
         n->ids.push_back( std::move(term) );
 
-        for ( 
+        for (
             auto first_time_through_loop = true;
             curr().type() == lexeme::Scope;
             first_time_through_loop = false
@@ -7340,7 +7348,7 @@ private:
                 && first_uid_was_std
                 && term.scope_op->type() == lexeme::Scope
                 && *term.id->identifier == "forward"
-                ) 
+                )
             {
                 error("std::forward is not needed in Cpp2 - use 'forward' parameters/arguments instead", false);
                 return {};
@@ -7988,12 +7996,22 @@ private:
     {
         auto n = std::make_unique<using_statement_node>();
 
+        if (
+            curr() == "export"
+            && peek(1)
+            && *peek(1) == "using"
+            )
+        {
+            n->export_ = true;
+            next();
+        }
+
         if (curr() != "using") {
             return {};
         }
 
         if (
-            peek(1) 
+            peek(1)
             && *peek(1) == "namespace"
             )
         {
@@ -9639,6 +9657,10 @@ private:
             }
             else if (curr() == "private") {
                 access = accessibility::private_;
+                next();
+            }
+            else if (curr() == "export") {
+                access = accessibility::export_;
                 next();
             }
 

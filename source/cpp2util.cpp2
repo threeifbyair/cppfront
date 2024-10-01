@@ -1,0 +1,241 @@
+module;
+
+#include <version>
+
+#if !defined(CPP2_IMPORT_STD) || !defined(__cpp_lib_modules)
+    #ifdef _MSC_VER
+        #include "intrin.h"
+    #endif
+    #include <algorithm>
+    #include <any>
+    #include <compare>
+    #include <concepts>
+    #include <cstddef>
+    #include <cstdint>
+    #include <cstdio>
+    #ifndef CPP2_NO_EXCEPTIONS
+        #include <exception>
+    #endif
+    #ifdef __cpp_lib_expected
+        #include <expected>
+    #endif
+    #if defined(__cpp_lib_format) || (defined(_MSC_VER) && _MSC_VER >= 1929)
+        #include <format>
+    #endif
+    #include <functional>
+    #include <iostream>
+    #include <sstream>
+    #include <iterator>
+    #include <limits>
+    #include <map>
+    #include <memory>
+    #include <numeric>
+    #include <new>
+    #include <random>
+    #include <optional>
+    #if defined(CPP2_USE_SOURCE_LOCATION)
+        #include <source_location>
+    #endif
+    #include <ranges>
+    #include <set>
+    #include <span>
+    #include <sstream>
+    #include <string>
+    #include <string_view>
+    #include <system_error>
+    #include <tuple>
+    #include <type_traits>
+    #ifndef CPP2_NO_RTTI
+        #include <typeinfo>
+    #endif
+    #include <utility>
+    #include <variant>
+    #include <vector>
+#endif
+
+#include "cpp2util.h"
+
+export module cpp2.util;
+
+#if defined(CPP2_IMPORT_STD) && defined(__cpp_lib_modules)
+import std;
+#endif
+
+#undef CPP2_IMPORT_STD
+#undef CPP2_INCLUDE_STD
+#define CPP2_MODULE_CPP2_UTIL
+
+export {
+
+using ::gcc_clang_msvc_min_versions;
+
+namespace cpp2 {
+
+using cpp2::i8;
+using cpp2::i16;
+using cpp2::i32;
+using cpp2::i64;
+using cpp2::u8;
+using cpp2::u16;
+using cpp2::u32;
+using cpp2::u64;
+
+using cpp2::ushort;
+using cpp2::uint;
+using cpp2::ulong;
+using cpp2::longlong;
+using cpp2::ulonglong;
+using cpp2::longdouble;
+
+using cpp2::_schar;
+using cpp2::_uchar;
+
+namespace string_util {
+
+  using string_util::split_string_list;
+
+  using string_util::ltrim;
+  using string_util::rtrim;
+  using string_util::trim;
+  using string_util::trim_copy;
+
+  using string_util::fixed_string;
+
+  using string_util::is_escaped;
+  using string_util::string_to_int;
+  using string_util::int_to_string;
+  using string_util::safe_toupper;
+  using string_util::safe_tolower;
+  using string_util::replace_all;
+  using string_util::join;
+
+} // namespace string_util
+
+using cpp2::cpp1_ref;
+using cpp2::cpp1_rvalue_ref;
+
+using cpp2::argument_of_helper;
+using cpp2::argument_of_t;
+using cpp2::argument_of_helper_op_is;
+using cpp2::argument_of_op_is_t;
+using cpp2::pointee_t;
+using cpp2::specialization_of_template_helper;
+
+using cpp2::specialization_of_template;
+using cpp2::specialization_of_template_type_and_nttp;
+using cpp2::boolean_testable;
+using cpp2::dereferencable;
+using cpp2::default_constructible;
+using cpp2::bounded_array;
+using cpp2::pointer_like;
+using cpp2::brace_initializable_to;
+using cpp2::same_type_as;
+using cpp2::defined;
+using cpp2::has_defined_argument;
+using cpp2::covertible_to_argument_of;
+using cpp2::valid_predicate;
+using cpp2::predicate_member_fun;
+using cpp2::valid_custom_is_operator;
+
+using cpp2::move;
+using cpp2::max;
+using cpp2::is_any;
+using cpp2::aligned_storage;
+using cpp2::deref_t;
+using cpp2::pointer_eq;
+using cpp2::hash_combine;
+
+using cpp2::type_it;
+using cpp2::type_find_if;
+using cpp2::variant_contains_type;
+using cpp2::constness_like_t;
+using cpp2::forward_like;
+
+using cpp2::message_to_cstr_adapter;
+using cpp2::contract_group;
+using cpp2::report_and_terminate;
+using cpp2::cpp2_default;
+using cpp2::bounds_safety;
+using cpp2::null_safety;
+using cpp2::type_safety;
+using cpp2::testing;
+
+namespace impl {
+
+using impl::assert_not_null;
+using impl::assert_not_zero;
+using impl::assert_in_bounds;
+using impl::Throw;
+using impl::Uncaught_exceptions;
+using impl::Dynamic_cast;
+using impl::Typeid;
+
+} // namespace impl
+
+using cpp2::unique;
+using cpp2::shared;
+using cpp2::cpp2_new;
+
+namespace impl {
+
+using impl::in;
+using impl::deferred_init;
+using impl::out;
+
+using impl::dependent_false;
+
+} // namespace impl
+
+using cpp2::nonesuch_;
+using cpp2::nonesuch;
+
+using cpp2::to_string;
+
+namespace impl {
+
+using impl::empty;
+using impl::is;
+using impl::as;
+
+} // namespace impl
+
+using cpp2::finally_success;
+using cpp2::finally;
+using cpp2::finally_presuccess;
+
+using cpp2::unchecked_narrow;
+using cpp2::unchecked_cast;
+
+using cpp2::args;
+using cpp2::make_args;
+
+using cpp2::range;
+using cpp2::contains;
+using cpp2::sum;
+
+using cpp2::alien_memory;
+
+using cpp2::has_flags;
+
+using cpp2::c_raii;
+using cpp2::fopen;
+
+namespace impl {
+
+using impl::cmp_mixed_signedness_check;
+using impl::cmp_less;
+using impl::cmp_less_eq;
+using impl::cmp_greater;
+using impl::cmp_greater_eq;
+using impl::as_;
+
+} // namespace impl
+
+} // namespace cpp2
+
+using cpp2::cpp2_new;
+
+}
+
+// A dummy to participate in generation (and forward Cppfront options to 'cpp2util.h').
+cpp2: namespace = { }
