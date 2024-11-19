@@ -248,7 +248,7 @@
     #endif
 
 //  Otherwise, just #include the facilities used in this header
-#else
+#elif !defined(CPP2_MODULE_CPP2_UTIL)
     #ifdef _MSC_VER
         #include "intrin.h"
     #endif

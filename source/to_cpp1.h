@@ -94,6 +94,14 @@ static cmdline_processor::register_flag cmd_line_paths(
     [] { flag_line_paths = true; }
 );
 
+static auto flag_import_cpp2_util = false;
+static cmdline_processor::register_flag cmd_import_cpp2_util(
+    9,
+    "import-cpp2-util",
+    "Imports all cpp2:: via 'import cpp2.util;' - '#include's the preprocessor parts",
+    []{ flag_import_cpp2_util = true; }
+);
+
 static auto flag_import_std = false;
 static cmdline_processor::register_flag cmd_import_std(
     0,
@@ -1291,6 +1299,101 @@ public:
         //  Generate a reasonable macroized name
         auto cpp1_FILENAME = to_upper_and_underbar(cpp1_filename);
 
+        lineno_t curr_lineno = 0;
+        auto hpp_includes = std::string{};
+
+        auto print_cpp2util_prolog = [&]() {
+            if (flag_include_std) {
+                printer.print_extra( "#define CPP2_INCLUDE_STD         Yes\n" );
+            }
+            else if (flag_import_std) {
+                printer.print_extra( "#define CPP2_IMPORT_STD          Yes\n" );
+            }
+
+            if (flag_no_exceptions) {
+                printer.print_extra( "#define CPP2_NO_EXCEPTIONS       Yes\n" );
+            }
+
+            if (flag_no_rtti) {
+                printer.print_extra( "#define CPP2_NO_RTTI             Yes\n" );
+            }
+        };
+
+        auto print_cpp2util = [&]() {
+            if (
+                !source.is_module_cpp2_util()
+                && (
+                    !tokens.get_map().empty()
+                    || flag_import_std
+                    || flag_include_std
+                    )
+                )
+            {
+                if (flag_import_cpp2_util) {
+                    printer.print_extra( "\n#include \"cpp2util_pre.h\"\n\n" );
+                } else {
+                    printer.print_extra( "\n#include \"cpp2util.h\"\n\n" );
+                }
+            }
+        };
+
+        auto emit_cpp1_line = [&](auto const& line) {
+            if (
+                source.has_cpp2()
+                && line.cat == source_line::category::empty
+                )
+            {
+                ++ret.cpp2_lines;
+            }
+            else
+            {
+                ++ret.cpp1_lines;
+            }
+
+            if (
+                flag_cpp2_only
+                && !line.text.empty()
+                && line.cat != source_line::category::comment
+                && line.cat != source_line::category::module_directive
+                && line.cat != source_line::category::module_declaration
+                && line.cat != source_line::category::import
+                )
+            {
+                if (line.cat == source_line::category::preprocessor) {
+                    if (!line.text.ends_with(".h2\"")) {
+                        errors.emplace_back(
+                            source_position(curr_lineno, 1),
+                            "pure-cpp2 switch disables the preprocessor, including #include (except of .h2 files) - use import instead (note: 'import std;' is implicit in -pure-cpp2)"
+                        );
+                        return false;
+                    }
+                }
+                else {
+                    errors.emplace_back(
+                        source_position(curr_lineno, 1),
+                        "pure-cpp2 switch disables Cpp1 syntax"
+                    );
+                    return false;
+                }
+            }
+
+            if (
+                line.cat == source_line::category::preprocessor
+                && line.text.ends_with(".h2\"")
+                )
+            {
+                //  Strip off the 2"
+                auto h_include = line.text.substr(0, line.text.size()-2);
+                printer.print_cpp1( h_include + "\"", curr_lineno );
+                hpp_includes += h_include + "pp\"\n";
+            }
+            else {
+                printer.print_cpp1( line.text, curr_lineno );
+            }
+            return true;
+        };
+
+        auto printed_module_directive = false;
 
         //---------------------------------------------------------------------
         //  Do lowered file prolog
@@ -1318,19 +1421,16 @@ public:
                 printer.print_extra( "#define " + cpp1_FILENAME+"_CPP2" + "\n\n" );
             }
 
-            if (flag_include_std) {
-                printer.print_extra( "#define CPP2_INCLUDE_STD         Yes\n" );
-            }
-            else if (flag_import_std) {
-                printer.print_extra( "#define CPP2_IMPORT_STD          Yes\n" );
-            }
-
-            if (flag_no_exceptions) {
-                printer.print_extra( "#define CPP2_NO_EXCEPTIONS       Yes\n" );
-            }
-
-            if (flag_no_rtti) {
-                printer.print_extra( "#define CPP2_NO_RTTI             Yes\n" );
+            if (source.is_module()) {
+                if (!source.has_module_directive())
+                {
+                    printer.print_extra( "module;\n" );
+                    printed_module_directive = true;
+                    print_cpp2util_prolog();
+                    print_cpp2util();
+                }
+            } else {
+                print_cpp2util_prolog();
             }
 
             for (auto& h: includes) {
@@ -1338,9 +1438,42 @@ public:
             }
         }
 
-        auto map_iter = tokens.get_map().cbegin();
-        auto hpp_includes = std::string{};
+        // Module lines.
+        for (auto const& line : source.get_module_lines())
+        {
+            //  Skip dummy line we added to make 0-vs-1-based offsets readable
+            if (curr_lineno != 0)
+            {
+                assert(line.cat != source_line::category::cpp2);
 
+                if (!emit_cpp1_line(line)) {
+                    return {};
+                }
+
+                if (
+                    !printed_module_directive
+                    && line.cat == source_line::category::module_directive
+                    )
+                {
+                    printed_module_directive = true;
+                    if (source.has_cpp2()) {
+                        print_cpp2util_prolog();
+                        print_cpp2util();
+                    }
+                }
+            }
+            ++curr_lineno;
+        }
+        if (
+            flag_import_cpp2_util
+            && source.has_cpp2()
+            && !source.is_module_cpp2_util()
+            )
+        {
+            printer.print_extra( "\nimport cpp2.util;\n\n" );
+        }
+
+        auto map_iter = tokens.get_map().cbegin();
 
         //---------------------------------------------------------------------
         //  Do phase0_type_decls
@@ -1354,13 +1487,8 @@ public:
             printer.print_extra( "\n//=== Cpp2 type declarations ====================================================\n\n" );
         }
 
-        if (
-            !tokens.get_map().empty()
-            || flag_import_std
-            || flag_include_std
-            )
-        {
-            printer.print_extra( "\n#include \"cpp2util.h\"\n\n" );
+        if (!source.is_module()) {
+            print_cpp2util();
         }
 
         if (
@@ -1399,67 +1527,24 @@ public:
             printer.reset_line_to(1, true);
         }
 
-        assert (printer.get_phase() == positional_printer::phase1_type_defs_func_decls);
-        for (
-            lineno_t curr_lineno = 0;
-            auto const& line : source.get_lines()
+        if (
+            !source.has_cpp2()
+            && source.is_module()
             )
+        {
+            curr_lineno -= unchecked_narrow<int>(std::ssize(source.get_module_lines()) - 1);
+        }
+
+        assert (printer.get_phase() == positional_printer::phase1_type_defs_func_decls);
+        for (auto const& line : source.get_non_module_lines())
         {
             //  Skip dummy line we added to make 0-vs-1-based offsets readable
             if (curr_lineno != 0)
             {
                 //  If it's a Cpp1 line, emit it
-                if (line.cat != source_line::category::cpp2)
-                {
-                    if (
-                        source.has_cpp2()
-                        && line.cat != source_line::category::preprocessor
-                        )
-                    {
-                        ++ret.cpp2_lines;
-                    }
-                    else
-                    {
-                        ++ret.cpp1_lines;
-                    }
-
-                    if (
-                        flag_cpp2_only
-                        && !line.text.empty()
-                        && line.cat != source_line::category::comment
-                        && line.cat != source_line::category::import
-                        )
-                    {
-                        if (line.cat == source_line::category::preprocessor) {
-                            if (!line.text.ends_with(".h2\"")) {
-                                errors.emplace_back(
-                                    source_position(curr_lineno, 1),
-                                    "pure-cpp2 switch disables the preprocessor, including #include (except of .h2 files) - use import instead (note: 'import std;' is implicit in -pure-cpp2)"
-                                );
-                                return {};
-                            }
-                        }
-                        else {
-                            errors.emplace_back(
-                                source_position(curr_lineno, 1),
-                                "pure-cpp2 switch disables Cpp1 syntax"
-                            );
-                            return {};
-                        }
-                    }
-
-                    if (
-                        line.cat == source_line::category::preprocessor
-                        && line.text.ends_with(".h2\"")
-                        )
-                    {
-                        //  Strip off the 2"
-                        auto h_include = line.text.substr(0, line.text.size()-2);
-                        printer.print_cpp1( h_include + "\"", curr_lineno );
-                        hpp_includes += h_include + "pp\"\n";
-                    }
-                    else {
-                        printer.print_cpp1( line.text, curr_lineno );
+                if (line.cat != source_line::category::cpp2) {
+                    if (!emit_cpp1_line(line)) {
+                        return {};
                     }
                 }
 
@@ -2638,6 +2723,10 @@ public:
     auto emit(using_statement_node const& n)
         -> void
     {   STACKINSTR
+        if (n.export_) {
+            printer.print_cpp2("export ", n.position());
+        }
+
         assert(n.keyword);
         emit(*n.keyword);
 
@@ -3482,12 +3571,12 @@ public:
                 last_was_prefixed = true;
             }
 
-            //  Handle the other Cpp2 postfix operators that stay postfix in Cpp1 
+            //  Handle the other Cpp2 postfix operators that stay postfix in Cpp1
             //  (currently '...' for expansion, not when used as a range operator)
             else if (
                 is_postfix_operator(i->op->type())
                 && !i->last_expr    // not being used as a range operator
-                ) 
+                )
             {
                 flush_args();
                 suffix.emplace_back( i->op->to_string(), i->op->position());
@@ -3528,7 +3617,7 @@ public:
                     }
 
                     auto print = print_to_string(
-                        *i->id_expr, 
+                        *i->id_expr,
                         false, // not a local name
                         i->op->type() == lexeme::Dot || i->op->type() == lexeme::DotDot // member access
                     );
@@ -4477,8 +4566,8 @@ public:
         {
             assert(n.declaration);
             auto is_param_to_namespace_scope_type =
-                n.declaration->parent_is_type() 
-                && n.declaration->parent_declaration->parent_is_namespace() 
+                n.declaration->parent_is_type()
+                && n.declaration->parent_declaration->parent_is_namespace()
                 ;
 
             auto emit_in_phase_0 =
@@ -5115,7 +5204,7 @@ public:
             || n.is_swap()
             || n.is_destructor()
             || (
-                n.my_decl 
+                n.my_decl
                 && generating_move_from == n.my_decl
                 )
             )
@@ -5129,7 +5218,7 @@ public:
         if (
             n.is_assignment()
             || (
-                n.my_decl 
+                n.my_decl
                 && generating_assignment_from == n.my_decl
                 )
             )
@@ -5839,6 +5928,8 @@ public:
                     else {
                         printer.print_cpp2("public: ", n.position());
                     }
+                } else if (n.is_export()) {
+                    printer.print_cpp2(to_string(n.access) + " ", n.position());
                 }
 
                 //  Emit template parameters if any
@@ -6094,11 +6185,32 @@ public:
             }
         }
 
+        //  Emit export on forward declaration.
+        if (
+            n.is_export()
+            && n.parent_is_namespace()
+           )
+        {
+            if (
+                printer.get_phase() == printer.phase0_type_decls
+                || (
+                    printer.get_phase() == printer.phase1_type_defs_func_decls
+                    && !n.is_type() // Done in phase 0.
+                    )
+                )
+            {
+                printer.print_cpp2(to_string(n.access) + " ", n.position());
+            }
+        }
         //  In class definitions, emit the explicit access specifier if there
         //  is one, or default to private for data and public for functions
-        if (printer.get_phase() == printer.phase1_type_defs_func_decls)
+        else if (printer.get_phase() == printer.phase1_type_defs_func_decls)
         {
-            if (!n.is_default_access()) {
+            if (
+                !n.is_default_access()
+                && !n.is_export()
+               )
+            {
                 assert (is_in_type);
                 printer.print_cpp2(to_string(n.access) + ": ", n.position());
             }
@@ -7020,8 +7132,8 @@ public:
                         return;
                     }
                 }
-                printer.preempt_position_push(n.position()); 
-                emit( *type, {}, print_to_string(*n.identifier) ); 
+                printer.preempt_position_push(n.position());
+                emit( *type, {}, print_to_string(*n.identifier) );
                 printer.preempt_position_pop();
 
                 if (

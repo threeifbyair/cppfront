@@ -60,7 +60,7 @@ struct source_line
 {
     std::string text;
 
-    enum class category : u8 { empty, preprocessor, comment, import, cpp1, cpp2, rawstring };
+    enum class category : u8 { empty, preprocessor, comment, module_directive, module_declaration, import, cpp1, cpp2, rawstring };
     category cat;
 
     bool all_tokens_are_densely_spaced = true; // to be overridden in lexing if they're not
@@ -85,13 +85,15 @@ struct source_line
         -> std::string
     {
         switch (cat) {
-        break;case category::empty:         return "/*   */ ";
-        break;case category::preprocessor:  return "/* # */ ";
-        break;case category::comment:       return "/* / */ ";
-        break;case category::import:        return "/* i */ ";
-        break;case category::cpp1:          return "/* 1 */ ";
-        break;case category::cpp2:          return "/* 2 */ ";
-        break;case category::rawstring:     return "/* R */ ";
+        break;case category::empty:               return "/*   */ ";
+        break;case category::preprocessor:        return "/* # */ ";
+        break;case category::comment:             return "/* / */ ";
+        break;case category::module_directive:    return "/* m#*/ ";
+        break;case category::module_declaration:  return "/* m */ ";
+        break;case category::import:              return "/* i */ ";
+        break;case category::cpp1:                return "/* 1 */ ";
+        break;case category::cpp2:                return "/* 2 */ ";
+        break;case category::rawstring:           return "/* R */ ";
         break;default: assert(false && "ICE: illegal category"); abort();
         }
     }
@@ -681,7 +683,7 @@ class cmdline_processor
 
 public:
     auto flags_starting_with(
-        std::string_view s, 
+        std::string_view s,
         bool             indicate_short_name = true
     )
         -> std::vector<std::string>

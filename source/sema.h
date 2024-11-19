@@ -1125,7 +1125,7 @@ private:
 
         //  This warning is noisy until we fix a couple of bugs,
         //  so disable it at least temporarily
-        // 
+        //
         ////  If we arrived back at the declaration without finding a use
         ////  and this is a user-named object (not 'this', 'that', or '_')
         //if (
@@ -1795,7 +1795,19 @@ public:
         }
 
         if (
-            n.access != accessibility::default_
+            n.is_export()
+            && !n.parent_is_namespace()
+            )
+        {
+            errors.emplace_back(
+                n.position(),
+                "an export declaration is only allowed at namespace scope"
+            );
+            return false;
+        }
+        else if (
+            !n.is_export()
+            && !n.is_default_access()
             && !n.parent_is_type()
             )
         {
@@ -2248,7 +2260,7 @@ public:
 
         //  All the scope-local names stay active for lookup until the end of their scope
         while (
-            !current_declarations.empty() 
+            !current_declarations.empty()
             && current_declarations.back() != nullptr
             )
         {
@@ -2286,9 +2298,9 @@ public:
     {
         inside_parameter_list.push_back( true );
         if (
-            !n.in_function_typeid 
+            !n.in_function_typeid
             && !n.in_template_param_list
-            ) 
+            )
         {
             push_lifetime_scope();
         }
@@ -2610,7 +2622,7 @@ public:
                     //  PARTIAL SUCCESS: Record the location of 'this' and keep going
                     //
                     found_this = *i;
-                    prev_token_was_this = 
+                    prev_token_was_this =
                         *prev2_token == "this"
                         && (prev_token->type() == lexeme::Dot || prev_token->type() == lexeme::DotDot)
                         ;
