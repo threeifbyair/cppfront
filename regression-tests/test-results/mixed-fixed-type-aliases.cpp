@@ -1,6 +1,3 @@
-#include <filesystem>
-#include <iostream>
-#include <typeinfo>
 
 
 //=== Cpp2 type declarations ====================================================
@@ -17,7 +14,9 @@ template<typename T> class mytype;
 //=== Cpp2 type definitions and function declarations ===========================
 
 #line 1 "mixed-fixed-type-aliases.cpp2"
-#line 4 "mixed-fixed-type-aliases.cpp2"
+#include <filesystem>
+#include <iostream>
+#include <typeinfo>
 
 namespace my {
     using u16 = float;

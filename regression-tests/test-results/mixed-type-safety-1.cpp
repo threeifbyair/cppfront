@@ -1,8 +1,3 @@
-#include <iostream>
-#include <string>
-#include <variant>
-#include <any>
-#include <optional>
 
 
 //=== Cpp2 type declarations ====================================================
@@ -16,7 +11,11 @@
 //=== Cpp2 type definitions and function declarations ===========================
 
 #line 1 "mixed-type-safety-1.cpp2"
-#line 6 "mixed-type-safety-1.cpp2"
+#include <iostream>
+#include <string>
+#include <variant>
+#include <any>
+#include <optional>
 
 class Shape { public: virtual ~Shape() { } };
 class Circle : public Shape { };

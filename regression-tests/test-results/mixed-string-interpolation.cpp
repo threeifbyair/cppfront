@@ -1,7 +1,3 @@
-#include <iostream>
-#include <string_view>
-#include <utility>
-#include <tuple>
 
 
 //=== Cpp2 type declarations ====================================================
@@ -15,7 +11,10 @@
 //=== Cpp2 type definitions and function declarations ===========================
 
 #line 1 "mixed-string-interpolation.cpp2"
-#line 5 "mixed-string-interpolation.cpp2"
+#include <iostream>
+#include <string_view>
+#include <utility>
+#include <tuple>
 
 struct custom_struct_with_no_stringize_customization { } custom;
 

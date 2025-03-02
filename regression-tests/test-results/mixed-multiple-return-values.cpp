@@ -1,7 +1,3 @@
-#line 2 "mixed-multiple-return-values.cpp2"
-#include <iostream>
-#include <random>
-#include <string>
 
 
 //=== Cpp2 type declarations ====================================================
@@ -16,6 +12,9 @@
 
 #line 1 "mixed-multiple-return-values.cpp2"
 
+#include <iostream>
+#include <random>
+#include <string>
 
 struct f_ret { int i; std::string s; };
 

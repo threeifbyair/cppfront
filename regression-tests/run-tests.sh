@@ -185,7 +185,8 @@ else
     elif [[ "$compiler_version" == *"g++-10"* ]]; then
         exec_out_dir="$expected_results_dir/gcc-10"
     elif [[ "$compiler_version" == *"g++-12"* ||
-            "$compiler_version" == *"g++-13"*
+            "$compiler_version" == *"g++-13"* ||
+            "$compiler_version" == *"g++ (Ubuntu 13"*
          ]]; then
         exec_out_dir="$expected_results_dir/gcc-13"
     elif [[ "$compiler_version" == *"g++-14"* ]]; then
