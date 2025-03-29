@@ -440,7 +440,7 @@ private:
         c.dbg_was_printed = true;
     }
 
-    auto flush_comments( source_position pos )
+    auto flush_comments( source_position pos, bool print_remaining_comments = false )
         -> void
     {
         if (!pcomments) {
@@ -452,7 +452,7 @@ private:
 
         //  Add unprinted comments and blank lines as needed to catch up vertically
         //
-        while (curr_pos.lineno < pos.lineno)
+        while (print_remaining_comments ? (next_comment < std::ssize(comments)) : (curr_pos.lineno < pos.lineno))
         {
             //  If a comment goes on this line, print it
             if (
@@ -476,7 +476,8 @@ private:
                     )
                 {
                     print_comment( comments[next_comment] );
-                    assert(curr_pos.lineno <= pos.lineno);  // we shouldn't have overshot
+                    if (!print_remaining_comments)
+                        assert(curr_pos.lineno <= pos.lineno);  // we shouldn't have overshot
                 }
 
                 ++next_comment;
@@ -487,6 +488,9 @@ private:
                 print("\n");
             }
         }
+        // And catch up.
+        while (curr_pos.lineno < pos.lineno)
+            print("\n");
     }
 
     auto print_unprinted_comments()
@@ -597,7 +601,7 @@ public:
             && psource->has_cpp2()
             )
         {
-            flush_comments( {curr_pos.lineno+1, 1} );
+            flush_comments( {curr_pos.lineno+1, 1}, print_remaining_comments );
 
             if (print_remaining_comments) {
                 print_unprinted_comments();
