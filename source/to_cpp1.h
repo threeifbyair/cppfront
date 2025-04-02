@@ -3329,13 +3329,19 @@ public:
                 return cap.str_suppressed_move == my_sym;
             });
 
-            assert(
-                found != n.cap_grp->members.cend()
-                && "ICE: could not find this postfix-expression in capture group"
-            );
-            //  And then emit that capture symbol with number
-            assert (!found->cap_sym.empty());
-            captured_part += found->cap_sym;
+            if (found == n.cap_grp->members.cend())
+            {
+                errors.emplace_back(
+                    n.position(),
+                    "cannot find capture group member - if no errors are above, this is a compiler error"
+                );
+            }
+            else
+            {
+                //  And then emit that capture symbol with number
+                assert (!found->cap_sym.empty());
+                captured_part += found->cap_sym;
+            }
         }
 
         //  Otherwise, we're going to have to potentially do some work to change

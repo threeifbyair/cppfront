@@ -1,0 +1,4 @@
+pure2-bugfix-for-missing-capture.cpp2...
+pure2-bugfix-for-missing-capture.cpp2(3,12): error: a function must have a body ('=' initializer), unless it is virtual (has a 'virtual this' parameter) or is defaultable (operator== or operator<=>)
+pure2-bugfix-for-missing-capture.cpp2(3,42): error: cannot find capture group member - if no errors are above, this is a compiler error
+

@@ -1,0 +1,4 @@
+h: (s: std::string, inout m: std::map<const int,std::string> ) -> std::string
+= {
+    return :() -> std>:string = { return (s + m[0])$; }; 
+}
