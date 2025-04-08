@@ -2762,6 +2762,7 @@ public:
     {
         //  First calculate the stringized version of each capture expression
         //  This will let us compare and de-duplicate repeated capture expressions
+        captures.printing = true;
         for (auto& cap : captures.members)
         {
             assert(cap.capture_expr->cap_grp == &captures);
@@ -2772,6 +2773,7 @@ public:
                 suppress_move_from_last_use = false;
             }
         }
+        captures.printing = false;
 
         // If move from last use was used on the variable we need to rewrite the str to add std::move
         // to earlier use of the variable. That will save us from capturing one variable two times
@@ -3325,22 +3327,33 @@ public:
             auto my_sym = print_to_string(n, true);
             suppress_move_from_last_use = false;
 
-            auto found = std::find_if(n.cap_grp->members.cbegin(), n.cap_grp->members.cend(), [my_sym](auto& cap) {
-                return cap.str_suppressed_move == my_sym;
-            });
-
-            if (found == n.cap_grp->members.cend())
+            if (n.cap_grp->printing) 
             {
                 errors.emplace_back(
                     n.position(),
-                    "cannot find capture group member - if no errors are above, this is a compiler error"
+                    "nested capture group - did you use two dollar signs in the same expression?"
                 );
+
             }
             else
             {
-                //  And then emit that capture symbol with number
-                assert (!found->cap_sym.empty());
-                captured_part += found->cap_sym;
+                auto found = std::find_if(n.cap_grp->members.cbegin(), n.cap_grp->members.cend(), [my_sym](auto& cap) {
+                    return cap.str_suppressed_move == my_sym;
+                });
+
+                if (found == n.cap_grp->members.cend())
+                {
+                    errors.emplace_back(
+                        n.position(),
+                        "cannot find capture group member - if no errors are above, this is a compiler error"
+                    );
+                }
+                else
+                {
+                    //  And then emit that capture symbol with number
+                    assert (!found->cap_sym.empty());
+                    captured_part += found->cap_sym;
+                }
             }
         }
 

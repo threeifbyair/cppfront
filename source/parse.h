@@ -943,6 +943,7 @@ struct capture {
 
 struct capture_group {
     std::vector<capture> members;
+    bool printing = false;
 
     auto add(postfix_expression_node* p)
         -> void

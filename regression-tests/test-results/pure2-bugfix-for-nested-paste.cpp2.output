@@ -1,0 +1,4 @@
+pure2-bugfix-for-nested-paste.cpp2...
+pure2-bugfix-for-nested-paste.cpp2(2,29): error: nested capture group - did you use two dollar signs in the same expression?
+pure2-bugfix-for-nested-paste.cpp2(2,22): error: cannot find capture group member - if no errors are above, this is a compiler error
+
