@@ -1,0 +1,4 @@
+pure2-patch-for-scope-problem.cpp2...
+pure2-patch-for-scope-problem.cpp2(5,42): error: ICE: cannot find enclosing scope for symbol m
+pure2-patch-for-scope-problem.cpp2(5,38): error: ICE: cannot find enclosing scope for symbol s
+

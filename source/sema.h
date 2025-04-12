@@ -1110,7 +1110,17 @@ private:
                 )
             {
             }
-            assert(!comp || symbols[i].start);
+
+            // TEMPORARY ERROR to replace the assert below
+            if (comp && !symbols[i].start)
+            {
+                errors.emplace_back(
+                    sym->identifier->position(),
+                    "ICE: cannot find enclosing scope for symbol " 
+                    + sym->identifier->to_string()
+                );
+            }
+            //assert(!comp || symbols[i].start);
 
             //  If found in a branch, record its depth
             if (

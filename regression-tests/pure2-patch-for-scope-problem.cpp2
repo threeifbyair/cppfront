@@ -1,0 +1,16 @@
+h: (s: std::string, inout m: std::map<const int,std::string> ) -> std::string
+= {
+    do { } while false;
+    for m do (_) { 
+        return :() -> std::string = (s + m[0])$;
+    }
+}
+
+main: () -> int
+= {
+    m := std::map<const int,std::string>();
+    m[0] = "Hello";
+    result := h("World", m);
+    _ = result;
+    return 0;
+}
