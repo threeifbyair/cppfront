@@ -8,6 +8,10 @@ Copyright (c) Herb Sutter &#x2022; See [License](LICENSE)
 
 Cppfront is a compiler from an experimental C++ 'syntax 2' (Cpp2) to today's 'syntax 1' (Cpp1), to prove out some concepts, share some ideas, and prototype features that can also be proposed for evolving today's C++.
 
+## This version
+
+This version of cppfront is maintained by Alistair Bell. It attempts to track the mainline, but with additional quality-of-life improvements like module support (from JohelEGP) and a makefile. There is an example of how to use cpp2 and modules with appropriate CMake scripts, based on this version of the compiler, in my [Advent of Code 2024](https://github.com/threeifbyair/advent2024) repo.
+
 ## Documentation: [available here](https://hsutter.github.io/cppfront/)
 
  - [Installation](https://hsutter.github.io/cppfront/welcome/overview/#how-do-i-get-and-build-cppfront)
