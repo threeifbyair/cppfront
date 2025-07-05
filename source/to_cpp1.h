@@ -2798,8 +2798,11 @@ public:
 
         auto id = print_to_string(*n.id);
         if (n.for_namespace()) {
-            assert(id.ends_with("::_"));
-            id.resize( id.size() - 3 );     // maybe someday: id.remove_suffix(3)
+            // id really should end in ::_ because for_namespace() is true.
+            // But if print_to_string() fell over, we still need to survive.
+            if (id.ends_with("::_")) {
+                id.resize( id.size() - 3 );     // maybe someday: id.remove_suffix(3)
+            }
         }
 
         printer.print_cpp2(" " + id + ";", n.position());

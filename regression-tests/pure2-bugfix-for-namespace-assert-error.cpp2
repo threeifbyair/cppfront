@@ -1,0 +1,18 @@
+
+t: @struct type = {
+  f: (this) -> int == 0;
+}
+
+ns: nameYpace = { // yes, deliberately misspelled
+  f: (_) -> int == 1;
+} // namespace ns
+
+main: () = {
+  {
+    f := :() = {
+      using ns::f;
+      static_assert(t().f() == 0);
+    };
+    _ = f;
+  }
+}
