@@ -1,0 +1,4 @@
+pure2-bugfix-for-namespace-assert-error.cpp2...
+pure2-bugfix-for-namespace-assert-error.cpp2(6,1): error: an object initializer must be an expression
+pure2-bugfix-for-namespace-assert-error.cpp2(13,13): error: use 'ns.' to refer to an object member
+
