@@ -1,0 +1,8 @@
+test: (forward v) = {
+    _ = foo(forward v- :(forward v) = v as X<20>);
+}
+
+//test2: (forward v) = {
+//    foo := :(forward v) = v as X<20>;
+//    _ = foo(forward v);
+//}

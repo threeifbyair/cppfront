@@ -3289,8 +3289,15 @@ public:
         assert (!current_args.empty());
         if (current_args.back().pass == passing_style::forward)
         {
-            assert (n.expr->get_token());
-            assert (!current_args.back().ptoken);
+            if (!(n.expr->get_token() 
+                || !current_args.back().ptoken))
+            {
+                errors.emplace_back(
+                    n.position(),
+                    "illegal forwarding expression"
+                );
+                return;
+            }
             current_args.back().ptoken = n.expr->get_token();
             auto decl = sema.get_declaration_of(*current_args.back().ptoken);
             if (!(decl && decl->parameter && decl->parameter->pass == passing_style::forward))
