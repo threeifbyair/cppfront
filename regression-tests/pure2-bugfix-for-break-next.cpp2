@@ -1,0 +1,13 @@
+main: () -> int = {
+    myarray: std::array<i32, 4> = (0, 1, 2, 3);
+    i := 0;
+    for myarray next i++ do (member) {
+        if member == 0 {
+            break;
+        }
+    }
+
+    std::cout << "i = " << i << std::endl;
+    return i;
+}
+
